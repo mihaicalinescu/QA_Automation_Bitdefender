@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+import logging
 
 
 class FolderSyncer:
@@ -8,16 +9,19 @@ class FolderSyncer:
         self.destination = Path(destination)
 
     def sync(self):
-        print("Starting sync...")
+        logging.info("Starting synchronization")
 
         if not self.source.exists():
             raise ValueError("Source folder does not exist")
 
         if not self.destination.exists():
             self.destination.mkdir(parents=True)
+            logging.info(f"Created destination folder: {self.destination}")
 
         self._sync_source_to_destination(self.source, self.destination)
         self._delete_extra_items(self.source, self.destination)
+
+        logging.info("Synchronization completed")
 
     def _sync_source_to_destination(self, source_dir, destination_dir):
         for item in source_dir.iterdir():
@@ -26,18 +30,18 @@ class FolderSyncer:
             if item.is_dir():
                 if not dest_path.exists():
                     dest_path.mkdir()
-                    print(f"Created folder: {dest_path}")
+                    logging.info(f"Created folder: {dest_path}")
 
                 self._sync_source_to_destination(item, dest_path)
 
             elif item.is_file():
                 if not dest_path.exists():
                     shutil.copy2(item, dest_path)
-                    print(f"Copied new file: {item} -> {dest_path}")
+                    logging.info(f"Copied new file: {item} -> {dest_path}")
                 else:
                     if self._files_are_different(item, dest_path):
                         shutil.copy2(item, dest_path)
-                        print(f"Updated file: {item} -> {dest_path}")
+                        logging.info(f"Updated file: {item} -> {dest_path}")
 
     def _delete_extra_items(self, source_dir, destination_dir):
         for item in destination_dir.iterdir():
@@ -46,10 +50,10 @@ class FolderSyncer:
             if not source_path.exists():
                 if item.is_file():
                     item.unlink()
-                    print(f"Deleted extra file: {item}")
+                    logging.info(f"Deleted extra file: {item}")
                 elif item.is_dir():
                     shutil.rmtree(item)
-                    print(f"Deleted extra folder: {item}")
+                    logging.info(f"Deleted extra folder: {item}")
             else:
                 if item.is_dir() and source_path.is_dir():
                     self._delete_extra_items(source_path, item)
