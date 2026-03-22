@@ -32,13 +32,15 @@ def parse_arguments():
         help="Path to the destination folder"
     )
 
-    parser.add_argument(
+    mode_group = parser.add_mutually_exclusive_group(required=True)
+
+    mode_group.add_argument(
         "--once",
         action="store_true",
         help="Run synchronization only once"
     )
 
-    parser.add_argument(
+    mode_group.add_argument(
         "--interval",
         help="Synchronization interval, e.g. 10s, 5m, 1h, 1d"
     )
