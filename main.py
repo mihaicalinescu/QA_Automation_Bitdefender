@@ -1,5 +1,6 @@
 import argparse
 import logging
+import time
 from sync_tool import FolderSyncer
 
 
@@ -37,7 +38,36 @@ def parse_arguments():
         help="Run synchronization only once"
     )
 
+    parser.add_argument(
+        "--interval",
+        help="Synchronization interval, e.g. 10s, 5m, 1h, 1d"
+    )
+
     return parser.parse_args()
+
+
+def parse_interval(interval_str):
+    if not interval_str:
+        return None
+
+    unit = interval_str[-1].lower()
+    value = interval_str[:-1]
+
+    if not value.isdigit():
+        raise ValueError("Interval value must be a number followed by s, m, h, or d")
+
+    value = int(value)
+
+    if unit == "s":
+        return value
+    if unit == "m":
+        return value * 60
+    if unit == "h":
+        return value * 3600
+    if unit == "d":
+        return value * 86400
+
+    raise ValueError("Invalid interval unit. Use s, m, h, or d")
 
 
 def main():
@@ -52,8 +82,18 @@ def main():
 
     if args.once:
         syncer.sync()
+
+    elif args.interval:
+        interval_seconds = parse_interval(args.interval)
+        logging.info(f"Running periodic synchronization every {args.interval}")
+
+        while True:
+            syncer.sync()
+            logging.info(f"Waiting {interval_seconds} seconds until next synchronization")
+            time.sleep(interval_seconds)
+
     else:
-        logging.warning("No execution mode selected. Use --once for now.")
+        logging.warning("No execution mode selected. Use --once or --interval.")
 
     logging.info("Application finished")
 
