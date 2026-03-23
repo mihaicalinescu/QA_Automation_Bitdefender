@@ -37,12 +37,18 @@ def parse_arguments():
     mode_group.add_argument(
         "--once",
         action="store_true",
-        help="Run synchronization only once"
+        help="Run synchronization only once, immediately"
     )
 
     mode_group.add_argument(
         "--interval",
-        help="Synchronization interval, e.g. 10s, 5m, 1h, 1d"
+        help="Run synchronization periodically, e.g. 10s, 5m, 1h, 1d"
+    )
+
+    mode_group.add_argument(
+        "--start-in",
+        dest="start_in",
+        help="Run one-time synchronization in the future, e.g. 30s, 5m, 1h, 1d"
     )
 
     return parser.parse_args()
@@ -83,6 +89,7 @@ def main():
     syncer = FolderSyncer(args.source, args.destination)
 
     if args.once:
+        logging.info("Running one-time synchronization immediately")
         syncer.sync()
 
     elif args.interval:
@@ -94,8 +101,14 @@ def main():
             logging.info(f"Waiting {interval_seconds} seconds until next synchronization")
             time.sleep(interval_seconds)
 
+    elif args.start_in:
+        delay_seconds = parse_interval(args.start_in)
+        logging.info(f"One-time synchronization scheduled to start in {args.start_in}")
+        time.sleep(delay_seconds)
+        syncer.sync()
+
     else:
-        logging.warning("No execution mode selected. Use --once or --interval.")
+        logging.warning("No execution mode selected. Use --once, --interval or --start-in.")
 
     logging.info("Application finished")
 
